@@ -1,0 +1,73 @@
+#import required libraries
+import pandas as pd
+import seaborn as sb
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from keras.models import Sequential
+from keras.layers import Dense
+
+#load dataset
+data = pd.read_csv("/content/drive/MyDrive/ColabNotebooks/Datasets/Boston.csv")
+
+#preprocess the data
+data.head()
+
+data.shape
+
+data.columns
+
+data = data.rename(columns = {'medv':'Price'})
+
+data.columns
+
+data.info()
+
+data.describe()
+
+data.isnull().sum()
+
+#visualize the Price column
+sb.histplot(data['Price'])
+
+sb.boxplot(data['Price'])
+
+#split the data into independent and dependent
+X = data.drop('Price', axis=1)
+Y = data['Price']
+
+X.head()
+
+#fit transform the data
+sc = StandardScaler()
+X = sc.fit_transform(X)
+
+#split the data into train and test
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.3, random_state=42)
+print('Training set shape:', X_train.shape, Y_train.shape)
+print('Testing set shape:', X_test.shape, Y_test.shape)
+
+#define the neural network model structure
+model = Sequential()
+model.add(Dense(128, activation = 'relu', input_dim=14))
+model.add(Dense(64, activation = 'relu'))
+model.add(Dense(32, activation = 'relu'))
+model.add(Dense(16, activation = 'relu'))
+model.add(Dense(1))
+
+print(model.summary())
+
+#compile the model
+model.compile(optimizer = 'adam', loss ='mean_squared_error', metrics=['mae'])
+X_val = X_train
+Y_val = Y_train
+
+#train the model with 20 epochs
+model.fit(X_train, Y_train, epochs=20, batch_size=512, validation_data=(X_val, Y_val))
+
+#evaluate the result
+result = model.evaluate(X_test, Y_test)
+
+print("Evaluation results:")
+print("Loss:", result[0])
+print("Mean Absolute Error:", result[1])
+
