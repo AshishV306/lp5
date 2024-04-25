@@ -1,0 +1,141 @@
+import pandas as pd
+import numpy as np
+from keras.datasets import imdb
+
+
+
+(trainData, trainLable), (testData, testLable) = imdb.load_data(num_words=10000)
+
+
+
+def Sequence(seq):
+  result = np.zeros((len(seq), 10000))
+  for i, sq in enumerate(seq):
+    result[i, sq] = 1
+  
+  return result
+
+
+
+
+xTrain = Sequence(trainData)
+xTest = Sequence(testData)
+
+
+
+
+yTrain = np.asarray(trainLable).astype('float32')
+yTest = np.asarray(testLable).astype('float32')
+
+
+
+
+from keras.models import Sequential
+from keras.layers import Dense
+
+model = Sequential()
+model.add(Dense(16, input_shape = (10000,), activation = 'relu'))
+model.add(Dense(16, activation = 'relu'))
+model.add(Dense(1, activation = 'sigmoid'))
+model.summary()
+
+
+
+model.compile(optimizer = 'adam', loss = 'mse', metrics=['accuracy'])
+
+
+
+model.fit(xTrain, xTest, batch_size = 64, epochs=10, validation_split = 0.2)
+
+
+
+loss, acc = model.evaluate(xTest, yTest)
+print("Accuracy: ", acc * 100)
+
+
+
+yPred = model.predict(xTest)
+
+
+
+tests = []
+for i in yTest:
+  tests.append(int(i))
+
+
+
+preds = []
+for i in yPred:
+  if i[0] > 0.5:
+    preds.append(1)
+  else:
+    preds.append(0)
+
+
+
+from sklearn.metrics import accuracy_score, precision_score, recall_score
+print(accuracy_score(tests, preds))
+print(precision_score(tests, preds))
+print(recall_score(tests, preds))
+
+
+
+
+wordIdx = imdb.get_word_index()
+
+
+
+
+
+def Token(id):
+  for tk, i in wordIdx.items():
+    if i == id - 3:
+      return tk
+  return '?'
+
+
+
+
+def Review(id):
+  sent = ' '.join(Token(i) for i in trainData[id])
+  return sent
+
+
+
+
+Review(0)
+
+
+
+trainLable[0]
+
+
+
+Review(1)
+
+
+
+trainLable[1]
+
+
+
+
+def PrediceReview(review):
+  review = review.lower()
+  words = review.split()
+
+  encoded = [wordIdx.get(word, 0) for word in words]
+  seq = Sequence([encoded])
+
+  prediction = model.predict(seq)[0][0]
+  return prediction
+
+
+
+
+sampleReview = "The movie was fantastic! I loved every minute of it."
+prediction = PrediceReview(sampleReview)
+if prediction > 0.6:
+  print("Positive")
+else:
+  print("Negative")
